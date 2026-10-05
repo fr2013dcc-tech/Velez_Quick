@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dispersión de Pedidos · Cueros Vélez · Quick Help</title>
+
+<!-- Leaflet CSS & Cluster CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css" />
+
+<style>
+:root{
+  --bg:#0F1319;
+  --panel:#171C24;
+  --panel-2:#1E242E;
+  --input:#20272F;
+  --border:#2A313C;
+  --border-soft:#232A33;
+  --text:#E8EBF0;
+  --muted:#8C95A3;
+  --muted-2:#666F7C;
+  --accent:#FFCE1F;      /* Quick Help Accent */
+  --accent-dim:#C9A417;
+  --accent-ink:#161200;
+  --good:#34D399;
+  --bad:#FB7185;
+  --shadow:0 1px 0 rgba(255,255,255,.02), 0 8px 24px rgba(0,0,0,.35);
+  --radius:10px;
+  --radius-sm:7px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent)}
+::selection{background:rgba(255,206,31,.28)}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2c333d;border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#39424e}
+
+/* ---------- Header ---------- */
+header{
+  display:flex;align-items:center;gap:18px;
+  padding:14px 22px;
+  background:linear-gradient(180deg,#12161d,#0d1116);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:1200;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--accent);color:#111;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:17px;letter-spacing:-.5px;
+  box-shadow:0 2px 10px rgba(255,206,31,.25);
+}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:.2px}
+.brand-sub{font-size:12px;color:var(--muted);margin-top:-2px}
+.title-block{border-left:1px solid var(--border);padding-left:18px}
+.title-block h1{margin:0;font-size:15.5px;font-weight:650;letter-spacing:.2px}
+.client-tag{
+  display:inline-flex;align-items:center;gap:6px;margin-top:3px;
+  font-size:11.5px;color:var(--muted);
+}
+.client-dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.header-spacer{flex:1}
+.header-actions{display:flex;align-items:center;gap:10px}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+  padding:9px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:550;
+  cursor:pointer;transition:background .14s,border-color .14s,transform .05s;
+  white-space:nowrap;
+}
+.btn:hover{background:#252c36;border-color:#38424e}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:#161200;border-color:var(--accent)}
+.btn-primary:hover{background:#ffd94a;border-color:#ffd94a}
+.btn-ghost{background:transparent}
+.btn svg{width:15px;height:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- Layout ---------- */
+main{padding:18px 22px 40px;max-width:1680px;margin:0 auto}
+.section{margin-bottom:18px}
+.panel{
+  background:var(--panel);border:1px solid var(--border-soft);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.panel-head{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 16px;border-bottom:1px solid var(--border-soft);
+}
+.panel-head h2{margin:0;font-size:13px;font-weight:650;letter-spacing:.2px}
+.panel-head .hint{font-size:11.5px;color:var(--muted-2);margin-left:auto}
+
+/* ---------- Filter bar ---------- */
+.filters{
+  display:grid;grid-template-columns:repeat(6,1fr) auto;gap:12px;
+  padding:14px 16px;align-items:end;
+}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:11.5px;color:var(--muted);font-weight:550}
+select,input[type=text]{
+  width:100%;background:var(--input);color:var(--text);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 10px;font-size:13px;font-family:inherit;outline:none;
+  transition:border-color .14s,box-shadow .14s;
+}
+select:focus,input[type=text]:focus{border-color:var(--accent-dim);box-shadow:0 0 0 3px rgba(255,206,31,.10)}
+select:disabled{opacity:.5}
+
+/* multi CEDI dropdown */
+.multi{position:relative}
+.multi-btn{
+  width:100%;text-align:left;background:var(--input);color:var(--text);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;
+}
+.multi-btn:after{content:"";margin-left:auto;border:5px solid transparent;border-top-color:var(--muted);transform:translateY(2px)}
+.multi-panel{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:1100;
+  background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  box-shadow:var(--shadow);max-height:280px;overflow:auto;padding:6px;display:none;
+}
+.multi-panel.open{display:block}
+/* ---- Selector de rango de fechas ---- */
+.range-field{grid-column:span 2}
+.rangepick{position:relative}
+.range-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:1100;display:none;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);width:560px;max-width:92vw;overflow:hidden}
+.range-panel.open{display:block}
+/* ---- Vista pantalla completa ---- */
+#fsRoot{position:fixed;inset:0;z-index:3000;background:var(--bg);display:none;flex-direction:column}
+#fsRoot.on{display:flex}
+#fsRoot .fs-bar{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#12161d,#0d1116)}
+#fsRoot .fs-title{font-weight:700;font-size:14px}
+#fsRoot .fs-body{flex:1;min-height:0;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+#fsRoot .fs-body #mapPanel{flex:1;min-height:0;display:flex;flex-direction:column;margin:0}
+#fsRoot .fs-body #mapPanel .map-wrap{flex:1;min-height:0}
+#fsRoot .fs-body #mapPanel #map{height:100%}
+#fsRoot .fs-body #filterPanel{margin:0;flex:0 0 auto}
+body.fs-lock{overflow:hidden}
+#fsRoot #btnFS{display:none}
+.range-header{background:var(--accent);color:#161200;font-weight:700;font-size:14px;padding:12px 16px;font-variant-numeric:tabular-nums}
+.range-body{display:flex}
+.range-presets{display:flex;flex-direction:column;gap:6px;padding:12px;border-right:1px solid var(--border);min-width:154px;background:var(--panel)}
+.range-presets button{background:var(--input);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:8px 10px;font-size:12.5px;cursor:pointer;text-align:left}
+.range-presets button:hover{border-color:var(--accent-dim);color:var(--accent)}
+.range-presets button.active{background:var(--accent);color:#161200;border-color:var(--accent);font-weight:600}
+.range-cal{flex:1;padding:12px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav span{font-weight:600;font-size:13.5px;text-transform:capitalize}
+.cal-nav button{background:var(--input);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:16px;line-height:1}
+.cal-nav button:hover{border-color:var(--accent-dim)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{font-size:10.5px;color:var(--muted-2);text-align:center;padding:4px 0;font-weight:600}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;border-radius:6px;cursor:pointer;color:var(--text);user-select:none}
+.cal-day.out{color:var(--muted-2);opacity:.4}
+.cal-day:hover{background:#2b333e}
+.cal-day.inrange{background:rgba(255,206,31,.18);border-radius:0}
+.cal-day.edge{background:var(--accent);color:#161200;font-weight:700;border-radius:6px}
+.cal-day.today{outline:1px solid var(--accent-dim)}
+.range-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.range-actions button{background:var(--input);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+#rangeApply{background:var(--accent);color:#161200;border-color:var(--accent);font-weight:600}
+@media(max-width:640px){.range-body{flex-direction:column}.range-presets{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border)}.range-panel{width:340px}}
+.multi-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.multi-item:hover{background:#252c36}
+.multi-item input{accent-color:var(--accent)}
+.multi-swatch{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.multi-tools{display:flex;gap:6px;padding:4px 4px 8px}
+.multi-tools button{flex:1;font-size:11.5px;padding:6px;background:var(--input);border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer}
+.multi-tools button:hover{color:var(--text);border-color:#38424e}
+
+.filter-reset{display:flex;flex-direction:column;justify-content:end}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{
+  background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:15px 16px;position:relative;overflow:hidden;box-shadow:var(--shadow);
+}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.85}
+.kpi .k-label{font-size:11.5px;color:var(--muted);font-weight:550}
+.kpi .k-val{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .k-sub{font-size:11px;color:var(--muted-2);margin-top:2px}
+.kpi.alt:before{background:#3B82F6}
+.kpi.alt2:before{background:#34D399}
+
+/* ---------- Map ---------- */
+.map-wrap{position:relative}
+#map{height:540px;border-radius:0 0 var(--radius) var(--radius);background:#eef1f4}
+.map-controls{
+  display:flex;align-items:center;gap:16px;padding:11px 16px;flex-wrap:wrap;
+}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;color:var(--muted);user-select:none}
+.toggle input{display:none}
+.switch{width:34px;height:19px;border-radius:20px;background:#333b46;position:relative;transition:background .16s;flex:0 0 auto}
+.switch:after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#c3cad4;transition:transform .16s}
+.toggle input:checked + .switch{background:var(--accent)}
+.toggle input:checked + .switch:after{transform:translateX(15px);background:#161200}
+.geobar{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.progress{width:150px;height:7px;border-radius:6px;background:#252c36;overflow:hidden;display:none}
+.progress.on{display:block}
+.progress > i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.geo-status{font-size:11.5px;color:var(--muted);min-width:0}
+
+.legend{
+  position:absolute;bottom:14px;left:14px;z-index:500;
+  background:rgba(18,22,29,.92);border:1px solid var(--border);border-radius:8px;
+  padding:9px 11px;max-height:220px;overflow:auto;backdrop-filter:blur(4px);
+  font-size:11.5px;max-width:230px;display:none;
+}
+.legend.on{display:block}
+.legend h4{margin:0 0 7px;font-size:11px;color:var(--muted);font-weight:600}
+.legend .lg-item{display:flex;align-items:center;gap:8px;padding:2px 0}
+.legend .lg-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.legend .lg-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend .lg-count{margin-left:auto;color:var(--muted-2);font-variant-numeric:tabular-nums}
+
+/* ---------- Charts ---------- */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+.chart-card.wide{grid-column:1/-1}
+.chart-body{padding:8px 12px 14px;height:260px;position:relative}
+
+/* ---------- Table ---------- */
+.table-tools{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.table-tools .search{position:relative;flex:1;max-width:340px}
+.table-tools .search input{padding-left:32px}
+.table-tools .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted-2)}
+.rows-info{font-size:12px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.table-scroll{overflow:auto;max-height:520px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{
+  position:sticky;top:0;background:var(--panel-2);z-index:5;
+  text-align:left;padding:10px 12px;font-weight:600;color:var(--muted);
+  border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;
+}
+thead th:hover{color:var(--text)}
+thead th .arrow{opacity:.4;font-size:10px;margin-left:4px}
+thead th.sorted .arrow{opacity:1;color:var(--accent)}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border-soft);color:#cfd6de;vertical-align:top}
+tbody tr:hover{background:#1b212a}
+.cedi-chip{display:inline-flex;align-items:center;gap:6px;font-weight:550}
+.cedi-chip .dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+.pager{display:flex;align-items:center;gap:6px;padding:12px 16px;justify-content:center}
+.pager button{background:var(--panel-2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:13px}
+.pager button:hover:not(:disabled){border-color:#38424e}
+.pager button:disabled{opacity:.35;cursor:default}
+.pager button.active{background:var(--accent);color:#161200;border-color:var(--accent);font-weight:650}
+.pager .ellip{color:var(--muted-2);padding:0 2px}
+
+/* ---------- Mapping modal ---------- */
+.overlay{position:fixed;inset:0;background:rgba(6,9,13,.72);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)}
+.overlay.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;width:100%;max-width:720px;max-height:88vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border-soft)}
+.modal-head h3{margin:0;font-size:16px}
+.modal-head p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;padding:20px 22px}
+.map-field label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);margin-bottom:6px;font-weight:550}
+.map-field label .req{color:var(--accent);font-size:11px}
+.map-field .desc{font-size:11px;color:var(--muted-2);margin-bottom:6px}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:16px 22px;border-top:1px solid var(--border-soft);position:sticky;bottom:0;background:var(--panel)}
+
+/* ---------- Empty / toast ---------- */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 20px;color:var(--muted)}
+.empty svg{width:52px;height:52px;color:#2f3844;margin-bottom:16px}
+.empty h3{margin:0 0 6px;color:var(--text);font-size:17px;font-weight:600}
+.empty p{margin:0 0 20px;font-size:13px;max-width:440px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);z-index:3000;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:12px 18px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:#7a3b45}
+.toast.ok{border-color:#2f6b52}
+
+.hidden{display:none !important}
+
+/* Leaflet popup dark & store icon styles */
+.leaflet-popup-content-wrapper{background:var(--panel-2);color:var(--text);border-radius:9px;border:1px solid var(--border)}
+.leaflet-popup-tip{background:var(--panel-2);border:1px solid var(--border)}
+.leaflet-popup-content{margin:11px 13px;font-size:12.5px;line-height:1.55}
+.pop-t{font-weight:650;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.pop-t .dot{width:10px;height:10px;border-radius:3px}
+.pop-row{color:var(--muted);margin:1px 0}
+.pop-row b{color:var(--text);font-weight:550}
+.leaflet-container{background:#eef1f4}
+.leaflet-tooltip.zone-label{background:transparent;border:none;box-shadow:none;padding:0;color:#0b1220;font-weight:700;font-size:11px;text-shadow:0 0 3px #fff,0 0 4px #fff,0 0 2px #fff}
+.leaflet-tooltip.zone-label:before{display:none}
+.cedi-solo{font-size:10px;color:var(--muted-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;cursor:pointer;flex:0 0 auto}
+.cedi-solo:hover{color:var(--accent);border-color:var(--accent-dim)}
+.pop-solo{margin-top:8px;width:100%;background:var(--accent);color:#161200;border:none;border-radius:6px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer}
+.pop-solo:hover{background:#ffd94a}
+.leaflet-bar a{background:var(--panel-2);color:var(--text);border-color:var(--border)}
+.leaflet-bar a:hover{background:#252c36}
+
+/* Custom CEDI Store Marker */
+.store-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+  transition: transform 0.15s ease;
+}
+.store-pin:hover {
+  transform: scale(1.2);
+  z-index: 1000 !important;
+}
+
+/* Responsive */
+@media (max-width:1200px){
+  .filters{grid-template-columns:repeat(3,1fr)}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:800px){
+  .filters{grid-template-columns:repeat(2,1fr)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .charts{grid-template-columns:1fr}
+  .title-block{display:none}
+  #map{height:400px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">Q</div>
+    <div>
+      <div class="brand-name">Quick Help</div>
+      <div class="brand-sub">Last Mile · Operaciones</div>
+    </div>
+  </div>
+  <div class="title-block">
+    <h1>Dispersión de Pedidos</h1>
+    <span class="client-tag"><span class="client-dot"></span> Cliente: Cueros Vélez</span>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="header-actions">
+    <span id="cloudStatus" style="font-size:11.5px;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="btn btn-ghost hidden" id="btnPublish" title="Guardar los datos en la nube para que cualquiera con el link los vea">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16"/></svg>
+      Publicar en línea
+    </button>
+    <button class="btn btn-ghost" id="btnRemap" disabled title="Reasignar columnas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Columnas
+    </button>
+    <button class="btn btn-primary" id="btnLoad">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      Cargar base de datos
+    </button>
+    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv,.tsv" />
+  </div>
+</header>
+
+<main>
+
+  <!-- Filters -->
+  <section class="section panel" id="filterPanel">
+    <div class="filters">
+      <div class="field">
+        <label for="fCiudad">Ciudad / región</label>
+        <select id="fCiudad" disabled><option>Todas</option></select>
+      </div>
+      <div class="field">
+        <label for="fMunicipio">Municipio</label>
+        <select id="fMunicipio" disabled><option>Todos</option></select>
+      </div>
+      <div class="field">
+        <label for="fComuna">Comuna / localidad</label>
+        <select id="fComuna" disabled><option>Todas</option></select>
+      </div>
+      <div class="field range-field">
+        <label>Rango de fechas</label>
+        <div class="rangepick" id="rangePick">
+          <button type="button" class="multi-btn" id="rangeBtn" disabled>Todas las fechas</button>
+          <div class="range-panel" id="rangePanel">
+            <div class="range-header" id="rangeHeader">Todas las fechas</div>
+            <div class="range-body">
+              <div class="range-presets" id="rangePresets"></div>
+              <div class="range-cal">
+                <div class="cal-nav">
+                  <button type="button" id="calPrev">‹</button>
+                  <span id="calTitle"></span>
+                  <button type="button" id="calNext">›</button>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+                <div class="range-actions">
+                  <button type="button" id="rangeClear">Limpiar</button>
+                  <button type="button" id="rangeApply">Aplicar ✓</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>CEDI / punto de salida</label>
+        <div class="multi" id="cediMulti">
+          <button type="button" class="multi-btn" id="cediBtn" disabled>Todos los CEDI</button>
+          <div class="multi-panel" id="cediPanel">
+            <div class="multi-tools">
+              <button type="button" id="cediAll">Todos</button>
+              <button type="button" id="cediNone">Ninguno</button>
+            </div>
+            <div id="cediList"></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter-reset field">
+        <label>&nbsp;</label>
+        <button class="btn btn-ghost" id="btnReset" disabled style="justify-content:center">Limpiar filtros</button>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:11.5px;color:var(--muted-2)" id="dateRange"></div>
+  </section>
+
+  <!-- KPIs -->
+  <section class="section kpis" id="kpis">
+    <div class="kpi"><div class="k-label">Total pedidos</div><div class="k-val" id="kpiPedidos">—</div><div class="k-sub" id="kpiPedidosSub">del filtro actual</div></div>
+    <div class="kpi alt"><div class="k-label">CEDI activos</div><div class="k-val" id="kpiCedi">—</div><div class="k-sub">puntos de salida</div></div>
+    <div class="kpi"><div class="k-label">Municipios</div><div class="k-val" id="kpiMun">—</div><div class="k-sub">con entregas</div></div>
+    <div class="kpi"><div class="k-label">Comunas / localidades</div><div class="k-val" id="kpiCom">—</div><div class="k-sub">con entregas</div></div>
+    <div class="kpi alt2"><div class="k-label">Pedidos Medellín</div><div class="k-val" id="kpiMed">—</div><div class="k-sub" id="kpiMedPct">—</div></div>
+    <div class="kpi alt2"><div class="k-label">Pedidos Bogotá</div><div class="k-val" id="kpiBog">—</div><div class="k-sub" id="kpiBogPct">—</div></div>
+  </section>
+
+  <!-- Map -->
+  <section class="section panel" id="mapPanel">
+    <div class="panel-head">
+      <h2>Mapa de dispersión origen → destino</h2>
+      <span class="hint" id="mapHint">Carga una base para comenzar</span>
+      <button class="btn btn-ghost" id="btnFS" style="margin-left:12px;padding:7px 12px" title="Pantalla completa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        Pantalla completa
+      </button>
+    </div>
+    <div class="map-controls">
+      <label class="toggle"><input type="checkbox" id="tgOrigins" checked><span class="switch"></span> Orígenes (Tiendas CEDI)</label>
+      <label class="toggle"><input type="checkbox" id="tgDeliveries" checked><span class="switch"></span> Entregas</label>
+      <label class="toggle"><input type="checkbox" id="tgLines"><span class="switch"></span> Conexiones origen–destino</label>
+      <label class="toggle"><input type="checkbox" id="tgCluster" checked><span class="switch"></span> Agrupar (cluster)</label>
+      <label class="toggle"><input type="checkbox" id="tgMuni"><span class="switch"></span> Límites municipios</label>
+      <label class="toggle"><input type="checkbox" id="tgCom"><span class="switch"></span> Límites comunas / barrios</label>
+      <label class="toggle"><input type="checkbox" id="tgHeat"><span class="switch"></span> Mapa de calor</label>
+      <span class="geo-status" id="zoneStatus"></span>
+      <div class="geobar">
+        <span class="geo-status" id="geoStatus"></span>
+        <div class="progress" id="geoProgress"><i></i></div>
+        <button class="btn btn-ghost hidden" id="btnGeoStop" style="padding:7px 11px">Detener</button>
+        <select id="geoPrecision" class="hidden" style="width:auto;padding:7px 9px">
+          <option value="barrio">Precisión: barrio / zona</option>
+          <option value="exact">Precisión: dirección exacta</option>
+        </select>
+        <div class="multi hidden" id="geoCfgWrap" style="position:relative;display:inline-block">
+          <button class="btn btn-ghost" id="btnGeoCfg" title="Opciones de geocodificación" style="padding:7px 11px">⚙</button>
+          <div class="multi-panel" id="geoCfgPanel" style="right:0;left:auto;width:290px;padding:12px">
+            <label style="font-size:11.5px;color:var(--muted);font-weight:550">Token LocationIQ (opcional)</label>
+            <input type="text" id="geoToken" placeholder="pk.xxxxxxxxxxxx" style="margin:7px 0 5px">
+            <div style="font-size:11px;color:var(--muted-2);line-height:1.5">Mejor precisión y velocidad para direcciones colombianas. Token gratis en locationiq.com. Sin token se usa OpenStreetMap + Photon.</div>
+          </div>
+        </div>
+        <button class="btn hidden" id="btnGeocode" style="padding:7px 12px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          Geocodificar visibles
+        </button>
+      </div>
+    </div>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="legend" id="legend"><h4>CEDI</h4><div id="legendItems"></div></div>
+      <div class="empty" id="mapEmpty" style="position:absolute;inset:0;background:var(--bg)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3l6 2 6-2v16l-6 2-6-2-6 2V5l6-2zm0 0v16m6-14v16"/></svg>
+        <h3>Sin datos cargados</h3>
+        <p>Carga tu base en Excel (.xlsx) o CSV con las operaciones del año. El mapa ubicará cada tienda CEDI y sus entregas por color.</p>
+        <button class="btn btn-primary" id="btnLoad2">Cargar base de datos</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section class="section charts">
+    <div class="chart-card wide"><div class="panel-head"><h2>Pedidos por día</h2><span class="hint" id="diaHint"></span></div><div class="chart-body"><canvas id="chDia"></canvas></div></div>
+    <div class="chart-card"><div class="panel-head"><h2>Pedidos por CEDI</h2></div><div class="chart-body"><canvas id="chCedi"></canvas></div></div>
+    <div class="chart-card"><div class="panel-head"><h2>Pedidos por municipio</h2></div><div class="chart-body"><canvas id="chMun"></canvas></div></div>
+    <div class="chart-card"><div class="panel-head"><h2>Pedidos por mes</h2></div><div class="chart-body"><canvas id="chMes"></canvas></div></div>
+    <div class="chart-card"><div class="panel-head"><h2>Distribución por comuna / localidad</h2></div><div class="chart-body"><canvas id="chCom"></canvas></div></div>
+  </section>
+
+  <!-- Table -->
+  <section class="section panel">
+    <div class="panel-head"><h2>Detalle de pedidos</h2></div>
+    <div class="table-tools">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input type="text" id="tblSearch" placeholder="Buscar dirección, CEDI, comuna…" disabled>
+      </div>
+      <select id="pageSize" disabled style="width:auto">
+        <option value="25">25 filas</option><option value="50" selected>50 filas</option><option value="100">100 filas</option>
+      </select>
+      <span class="rows-info" id="rowsInfo"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="dataTable">
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pager"></div>
+  </section>
+
+</main>
+
+<!-- Vista de presentación / pantalla completa -->
+<div id="fsRoot">
+  <div class="fs-bar">
+    <span class="fs-title">Vista de presentación · <span style="color:var(--accent)">Cueros Vélez</span></span>
+    <span class="hint" id="fsHint" style="color:var(--muted-2);font-size:12px"></span>
+    <button class="btn btn-primary" id="fsExit" style="margin-left:auto">Salir de pantalla completa</button>
+  </div>
+  <div class="fs-body"></div>
+</div>
+
+<!-- Modal de mapeo de columnas -->
+<div class="overlay" id="mapModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Asignar columnas</h3>
+      <p>Detectamos los encabezados de tu archivo. Confirma qué columna corresponde a cada campo. Las marcadas con <span style="color:var(--accent)">•</span> son obligatorias.</p>
+    </div>
+    <div class="map-grid" id="mapGrid"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="mapCancel">Cancelar</button>
+      <button class="btn btn-primary" id="mapApply">Aplicar y procesar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- JS Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+"use strict";
+
+/* ---------- PALETA DE CEDI ---------- */
+/* Paleta amplia y bien separada (tonos saturados/oscuros, legibles sobre mapa blanco) */
+const CEDI_PALETTE = [
+  "#E6194B","#3CB44B","#4363D8","#F58231","#911EB4","#008080",
+  "#F032E6","#9A6324","#808000","#000075","#E67E22","#1ABC9C",
+  "#C0392B","#2980B9","#8E44AD","#16A085","#D35400","#2C3E50",
+  "#27AE60","#7D3C98","#B03A2E","#1F618D","#117A65","#6C3483"
+];
+
+/* ---------- DICCIONARIO MAESTRO DE COORDENADAS CEDI ---------- */
+const CEDI_MASTER_COORDS = {
+  "OT LA 65": [6.2251, -75.5802],
+  "VZ MAYORCA": [6.1611, -75.6042],
+  "VZ SAN DIEGO": [6.2331, -75.5691],
+  "VZ CS SANTAFE MED": [6.1965, -75.5735],
+  "OT CARABOBO": [6.2442, -75.5694],
+  "SUPER OUTLET": [6.2289, -75.5714],
+  "NP VIVA ENVIGADO": [6.1772, -75.5912],
+  "VZ VIVA ENVIGADO": [6.1772, -75.5912],
+  "VZ CS UNIBOGOTA": [4.7008, -74.0435],
+  "OT FLORESTA LQ": [4.6892, -74.0685],
+  "VZ LA FLORIDA MED": [6.2685, -75.5782],
+  "OT SUPER AMERICAS": [4.6315, -74.1189],
+  "VZ PLAZA DE LAS AMERICAS": [4.6195, -74.1378],
+  "VZ TITAN": [4.6958, -74.0862],
+  "OT CALLE 13LQ": [4.6468, -74.1165],
+  "VZ MALL PLAZA BOGOTA": [4.6225, -74.0882],
+  "VZ CS TESORO": [6.1968, -75.5587],
+  "TESORO 2": [6.1968, -75.5587],
+  "OT TOBERIN 2LQ": [4.7431, -74.0418],
+  "NP ARRAYANES": [6.1725, -75.6092],
+  "NP FABRICATO": [6.3375, -75.5562],
+  "NP LA CENTRAL": [6.2418, -75.5521],
+  "VZ PUERTA DEL NORTE": [6.3385, -75.5452],
+  "VZ MOLINOS 2": [6.2325, -75.6042],
+  "VZ LA COLINA": [4.7215, -74.0732],
+  "VELEZ NUESTRO BOGOTA": [4.6812, -74.1105],
+  "VZ CS GRANESTACI1": [4.6542, -74.1035],
+  "OT DIVER PLAZA": [4.7118, -74.1128]
+};
+
+/* ---------- Centroides aproximados ---------- */
+const CENTROIDS = {
+  "medellin":[6.2442,-75.5812],"bello":[6.3378,-75.5636],"envigado":[6.1667,-75.5833],
+  "itagui":[6.1719,-75.6111],"sabaneta":[6.1515,-75.6166],"la estrella":[6.1592,-75.6436],
+  "caldas":[6.0918,-75.6366],"copacabana":[6.3467,-75.5089],"girardota":[6.3792,-75.4453],
+  "barbosa":[6.4392,-75.3317],
+  "bogota":[4.6533,-74.0836],"usaquen":[4.7100,-74.0300],"chapinero":[4.6500,-74.0620],
+  "santa fe":[4.6080,-74.0730],"san cristobal":[4.5570,-74.0870],"usme":[4.4790,-74.1260],
+  "tunjuelito":[4.5720,-74.1330],"bosa":[4.6180,-74.1900],"kennedy":[4.6280,-74.1560],
+  "fontibon":[4.6740,-74.1470],"engativa":[4.7050,-74.1180],"suba":[4.7560,-74.0840],
+  "barrios unidos":[4.6670,-74.0840],"teusaquillo":[4.6450,-74.0920],"los martires":[4.6040,-74.0900],
+  "antonio narino":[4.5940,-74.0990],"puente aranda":[4.6160,-74.1040],"la candelaria":[4.5960,-74.0740],
+  "rafael uribe uribe":[4.5580,-74.1160],"ciudad bolivar":[4.5340,-74.1560],
+  "popular":[6.2967,-75.5450],"santa cruz":[6.2939,-75.5533],"manrique":[6.2725,-75.5480],
+  "aranjuez":[6.2789,-75.5578],"castilla":[6.2900,-75.5720],"doce de octubre":[6.2953,-75.5830],
+  "robledo":[6.2789,-75.5900],"villa hermosa":[6.2536,-75.5450],"buenos aires":[6.2400,-75.5480],
+  "laureles":[6.2450,-75.5920],"laureles estadio":[6.2450,-75.5920],"la america":[6.2530,-75.6000],
+  "san javier":[6.2560,-75.6150],"el poblado":[6.2080,-75.5680],"poblado":[6.2080,-75.5680],
+  "guayabal":[6.2150,-75.5900],"belen":[6.2300,-75.6000]
+};
+const VALLE_MUNICIPIOS = new Set(["medellin","bello","envigado","itagui","sabaneta",
+  "la estrella","caldas","copacabana","girardota","barbosa"]);
+
+const REGION_BOX = {
+  "Valle de Aburrá":{latMin:5.85,latMax:6.65,lngMin:-75.90,lngMax:-75.10},
+  "Bogotá":{latMin:4.30,latMax:4.98,lngMin:-74.45,lngMax:-73.88}
+};
+const REGION_CENTROID = {
+  "Valle de Aburrá":[6.2442,-75.5812],
+  "Bogotá":[4.6533,-74.0836]
+};
+const BOGOTA_LOCALIDADES = new Set(["bogota","usaquen","chapinero","santa fe","san cristobal",
+  "usme","tunjuelito","bosa","kennedy","fontibon","engativa","suba","barrios unidos","teusaquillo",
+  "los martires","antonio narino","puente aranda","la candelaria","rafael uribe uribe","ciudad bolivar","sumapaz"]);
+const MEDELLIN_COMUNAS = new Set(["popular","santa cruz","manrique","aranjuez","castilla",
+  "doce de octubre","robledo","villa hermosa","buenos aires","laureles","laureles estadio","la america",
+  "san javier","el poblado","poblado","guayabal","belen"]);
+
+function inBox(lat,lng,region){
+  const b=REGION_BOX[region]; if(!b) return true;
+  return lat>=b.latMin && lat<=b.latMax && lng>=b.lngMin && lng<=b.lngMax;
+}
+function regionFromCoord(lat,lng){
+  for(const reg in REGION_BOX){ if(inBox(lat,lng,reg)) return reg; }
+  return "";
+}
+function coerceCO(lat,lng){
+  lat=+lat; lng=+lng;
+  if(isNaN(lat)||isNaN(lng)) return null;
+  if(Math.abs(lat)>=55 && Math.abs(lng)<=15){ const t=lat; lat=lng; lng=t; }
+  if(lng>0 && lng>=60 && lng<=82) lng=-lng;
+  // auto-scale big integer/float numbers from exportable sheets
+  while(Math.abs(lat)>=90) lat/=10;
+  if(lat>=45 && lat<=85) lat/=10;
+  while(Math.abs(lng)>=180) lng/=10;
+  const ok = lat>=-4.5 && lat<=14.0 && lng>=-82.0 && lng<=-66.0;
+  return ok ? [lat,lng] : null;
+}
+
+/* ---------- Estado Global ---------- */
+const S = {
+  rawRows:[], headers:[], mapping:null,
+  records:[],
+  cediColor:{},
+  cediCoord:{},
+  geocache:{},
+  filtered:[],
+  sort:{key:"fecha",dir:-1},
+  page:1, pageSize:50, search:"",
+  geoMode:"barrio", token:"",
+  charts:{}, geocoding:false, geoStop:false
+};
+const GEO_KEY="qh_geocache_v2";
+const CFG_KEY="qh_colmap_v1";
+
+/* ---------- Helper functions ---------- */
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+const fmt = n => (n==null||isNaN(n))?"—":n.toLocaleString("es-CO");
+function toNum(v){
+  if(typeof v==="number") return v;
+  if(v==null||v==="") return NaN;
+  let s=v.toString().trim().replace(/[^0-9,.\-]/g,"");
+  if(s.indexOf(",")>-1 && s.indexOf(".")===-1) s=s.replace(",",".");
+  else s=s.replace(/,/g,"");
+  return parseFloat(s);
+}
+const stripAccents = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const norm = s => stripAccents(s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+function toast(msg, kind){
+  const t=$("#toast"); t.textContent=msg; t.className="toast show "+(kind||"");
+  clearTimeout(t._h); t._h=setTimeout(()=>{t.className="toast";},3200);
+}
+
+try{ S.geocache = JSON.parse(localStorage.getItem(GEO_KEY)||"{}"); }catch(e){ S.geocache={}; }
+function saveGeocache(){ try{ localStorage.setItem(GEO_KEY, JSON.stringify(S.geocache)); }catch(e){} }
+try{ S.token = localStorage.getItem("qh_geotoken")||""; }catch(e){ S.token=""; }
+
+function parseDate(v){
+  if(v==null||v==="") return null;
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v==="number"){
+    const d = XLSX.SSF ? XLSX.SSF.parse_date_code(v) : null;
+    if(d) return new Date(d.y, d.m-1, d.d);
+  }
+  const s=v.toString().trim();
+  let m=s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  if(m){
+    let day=+m[1], mon=+m[2], y=+m[3]; if(y<100) y+=2000;
+    if(mon>12 && day<=12){ const t=day; day=mon; mon=t; }
+    if(mon>12 || mon<1 || day<1 || day>31) return null;
+    return new Date(y, mon-1, day);
+  }
+  const mn={ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,set:8,oct:9,nov:10,dic:11};
+  m=norm(s).match(/(\d{1,2})\s+([a-z]{3})[a-z]*\s+(\d{4})/);
+  if(m && mn[m[2]]!=null) return new Date(+m[3], mn[m[2]], +m[1]);
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+
+function properCase(key){
+  return key.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+}
+function regionFromText(rec){
+  const c=norm(rec.ciudad);
+  if(c.includes("valle")||c.includes("aburra")||c.includes("medellin")||c.includes("antioquia")) return "Valle de Aburrá";
+  if(c.includes("bogota")||c.includes("cundinamarca")) return "Bogotá";
+  const mr=norm(rec.municipioRaw);
+  if(mr){
+    if(VALLE_MUNICIPIOS.has(mr)) return "Valle de Aburrá";
+    if(mr.includes("bogota")||BOGOTA_LOCALIDADES.has(mr)) return "Bogotá";
+    for(const v of VALLE_MUNICIPIOS){ if(mr.includes(v)) return "Valle de Aburrá"; }
+  }
+  const dn=norm(rec.dirEntrega);
+  if(dn.includes("bogota")||dn.includes("cundinamarca")) return "Bogotá";
+  for(const v of VALLE_MUNICIPIOS){ if(dn.includes(v)) return "Valle de Aburrá"; }
+  if(dn.includes("antioquia")) return "Valle de Aburrá";
+  return "";
+}
+function resolveMunicipio(rec){
+  const region=rec.region;
+  if(rec.municipioRaw){
+    const n=norm(rec.municipioRaw);
+    if(region==="Valle de Aburrá"){
+      for(const v of VALLE_MUNICIPIOS){ if(n.includes(v)) return properCase(v); }
+      return rec.municipioRaw;
+    }
+    if(region==="Bogotá") return n.includes("bogota")?"Bogota":rec.municipioRaw;
+    for(const key of Object.keys(CENTROIDS)){ if(n.includes(key)) return properCase(key); }
+    return rec.municipioRaw;
+  }
+  const n=norm(rec.dirEntrega);
+  if(region==="Bogotá") return "Bogota";
+  if(region==="Valle de Aburrá"){
+    for(const v of VALLE_MUNICIPIOS){ if(n.includes(v)) return properCase(v); }
+    return "Medellin";
+  }
+  for(const v of VALLE_MUNICIPIOS){ if(n.includes(v)) return properCase(v); }
+  if(n.includes("bogota")) return "Bogota";
+  return "";
+}
+function detectComuna(rec){
+  const n=norm(rec.dirEntrega);
+  const pool = rec.region==="Valle de Aburrá" ? MEDELLIN_COMUNAS
+             : rec.region==="Bogotá" ? BOGOTA_LOCALIDADES : null;
+  if(pool){ for(const key of pool){ if(key.length>4 && n.includes(key)) return properCase(key); } return ""; }
+  for(const key of Object.keys(CENTROIDS)){ if(key.length>4 && n.includes(key)) return properCase(key); }
+  return "";
+}
+
+$("#btnLoad").onclick=$("#btnLoad2").onclick=()=>$("#fileInput").click();
+$("#fileInput").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:"array",cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+      if(!rows.length){ toast("El archivo está vacío.","err"); return; }
+      let headerIdx=0;
+      for(let i=0;i<Math.min(rows.length,8);i++){
+        if(rows[i].filter(c=>c!=="").length>=3){ headerIdx=i; break; }
+      }
+      S.headers=rows[headerIdx].map((h,i)=> (h!==""?h.toString().trim():("Columna "+String.fromCharCode(65+i))));
+      const body=rows.slice(headerIdx+1).filter(r=>r.some(c=>c!==""));
+      S.rawRows=body.map(r=>{ const o={}; S.headers.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:""); return o; });
+      if(!S.rawRows.length){ toast("No se encontraron filas de datos.","err"); return; }
+      openMappingModal();
+    }catch(err){ console.error(err); toast("No se pudo leer el archivo: "+err.message,"err"); }
+  };
+  reader.readAsArrayBuffer(f);
+  e.target.value="";
+};
+
+const FIELDS=[
+  {k:"fecha",       label:"Fecha del pedido", req:true,  hints:["fecha","date","dia","servicio"], desc:"Se usa para el filtro y el gráfico por mes"},
+  {k:"cedi",        label:"CEDI / punto de salida", req:true, hints:["cedi","tienda","origen","punto recogida","bodega","almacen","sede","nombre cedi"], desc:"Columna CEDI o punto de salida"},
+  {k:"dirEntrega",  label:"Dirección de entrega", req:true, hints:["direccion servicio","direccion cliente","direccion entrega","destino","direccion"], desc:"Dirección del cliente"},
+  {k:"dirRecogida", label:"Dirección de recogida", req:false, hints:["direccion recogida","origen","recogida","pickup"], desc:"Opcional — dirección física del CEDI"},
+  {k:"ciudad",      label:"Ciudad / región", req:false, hints:["ciudad","region","zona","valle","regional"], desc:"Si falta, se deduce del municipio"},
+  {k:"municipio",   label:"Municipio", req:false, hints:["municipio","muni"], desc:"Si falta, se deduce de la dirección"},
+  {k:"comuna",      label:"Comuna / localidad", req:false, hints:["comuna","localidad","barrio","sector"], desc:"Filtro dinámico por municipio"},
+  {k:"lat",         label:"Latitud entrega", req:false, coord:{axis:"lat",side:"entrega"}, hints:["latitud_entrega","lat_entrega","lat_cliente","latitud","lat"], desc:"Coordenada de entrega al cliente"},
+  {k:"lng",         label:"Longitud entrega", req:false, coord:{axis:"lng",side:"entrega"}, hints:["longitud_entrega","lng_entrega","lng_cliente","lon_entrega","longitud","lng","lon"], desc:"Coordenada de entrega al cliente"},
+  {k:"cediLat",     label:"Latitud CEDI (origen)", req:false, coord:{axis:"lat",side:"cedi"}, hints:["latitud_cedi","lat_cedi","lat_origen","cedi_lat"], desc:"Coordenada exacta del CEDI/tienda"},
+  {k:"cediLng",     label:"Longitud CEDI (origen)", req:false, coord:{axis:"lng",side:"cedi"}, hints:["longitud_cedi","lng_cedi","lon_cedi","lng_origen","cedi_lng"], desc:"Coordenada exacta del CEDI/tienda"}
+];
+
+function guessColumn(field){
+  if(field.coord){
+    const axisTok = field.coord.axis==="lat" ? ["lat","latitud","y"] : ["lng","lon","long","longitud","x"];
+    const cediTok = ["cedi","origen","salida","tienda","recogida","bodega","almacen","punto"];
+    
+    for(const h of S.headers){
+      const nh = norm(h).replace(/_/g," ");
+      const toks = nh.split(" ");
+      const hasAxis = toks.some(t => axisTok.includes(t)) || axisTok.some(a => nh.includes(a));
+      if(!hasAxis) continue;
+      
+      const isCedi = toks.some(t => cediTok.includes(t)) || cediTok.some(c => nh.includes(c));
+      if(field.coord.side==="cedi" && isCedi) return h;
+      if(field.coord.side==="entrega" && !isCedi) return h;
+    }
+    return "";
+  }
+  for(const h of S.headers){
+    const nh=norm(h);
+    for(const hint of field.hints){ if(nh.includes(norm(hint))) return h; }
+  }
+  if(field.k==="dirEntrega" && S.headers[3]) return S.headers[3];
+  if(field.k==="cedi" && S.headers[5]) return S.headers[5];
+  return "";
+}
+
+function openMappingModal(){
+  const saved = (()=>{try{return JSON.parse(localStorage.getItem(CFG_KEY)||"null")}catch(e){return null}})();
+  const grid=$("#mapGrid"); grid.innerHTML="";
+  FIELDS.forEach(f=>{
+    const cur = (saved && saved[f.k] && S.headers.includes(saved[f.k])) ? saved[f.k] : guessColumn(f);
+    const opts = ['<option value="">— ninguna —</option>']
+      .concat(S.headers.map(h=>`<option value="${escAttr(h)}" ${h===cur?"selected":""}>${escHtml(h)}</option>`)).join("");
+    const div=document.createElement("div");
+    div.className="map-field";
+    div.innerHTML=`<label>${escHtml(f.label)} ${f.req?'<span class="req">•</span>':''}</label>
+      <div class="desc">${escHtml(f.desc)}</div>
+      <select data-k="${f.k}">${opts}</select>`;
+    grid.appendChild(div);
+  });
+  $("#mapModal").classList.add("on");
+}
+$("#mapCancel").onclick=()=>$("#mapModal").classList.remove("on");
+$("#btnRemap").onclick=openMappingModal;
+$("#mapApply").onclick=()=>{
+  const mapping={};
+  $$("#mapGrid select").forEach(sel=>{ mapping[sel.dataset.k]=sel.value; });
+  for(const f of FIELDS){ if(f.req && !mapping[f.k]){ toast("Falta asignar: "+f.label,"err"); return; } }
+  S.mapping=mapping;
+  try{ localStorage.setItem(CFG_KEY, JSON.stringify(mapping)); }catch(e){}
+  $("#mapModal").classList.remove("on");
+  buildRecords();
+};
+function escHtml(s){return (s+"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function escAttr(s){return (s+"").replace(/"/g,"&quot;");}
+
+function buildRecords(){
+  const m=S.mapping;
+  const recs=[];
+  for(const row of S.rawRows){
+    const d=parseDate(row[m.fecha]);
+    const rec={
+      fecha:d, mes:d?d.getMonth():null, anio:d?d.getFullYear():null,
+      cedi:(row[m.cedi]||"").toString().trim() || "Sin CEDI",
+      dirEntrega:(row[m.dirEntrega]||"").toString().trim(),
+      dirRecogida:m.dirRecogida?(row[m.dirRecogida]||"").toString().trim():"",
+      municipioRaw:m.municipio?(row[m.municipio]||"").toString().trim():"",
+      comuna:m.comuna?(row[m.comuna]||"").toString().trim():"",
+      ciudad:m.ciudad?(row[m.ciudad]||"").toString().trim():"",
+      region:"", fileLat:null, fileLng:null, cediLat:null, cediLng:null, lat:null, lng:null
+    };
+    if(m.lat && m.lng){
+      const c=coerceCO(toNum(row[m.lat]), toNum(row[m.lng]));
+      if(c){ rec.fileLat=c[0]; rec.fileLng=c[1]; }
+    }
+    if(m.cediLat && m.cediLng){
+      const c=coerceCO(toNum(row[m.cediLat]), toNum(row[m.cediLng]));
+      if(c){ rec.cediLat=c[0]; rec.cediLng=c[1]; }
+    }
+    rec.region = (rec.fileLat!=null ? regionFromCoord(rec.fileLat,rec.fileLng) : "") || regionFromText(rec);
+    recs.push(rec);
+  }
+
+  const votes={};
+  recs.forEach(r=>{ if(r.region){ (votes[r.cedi]=votes[r.cedi]||{}); votes[r.cedi][r.region]=(votes[r.cedi][r.region]||0)+1; }});
+  const cediRegion={};
+  for(const c in votes){ cediRegion[c]=Object.entries(votes[c]).sort((a,b)=>b[1]-a[1])[0][0]; }
+  recs.forEach(r=>{ if(!r.region && cediRegion[r.cedi]) r.region=cediRegion[r.cedi]; });
+
+  recs.forEach(r=>{
+    r.municipio = resolveMunicipio(r);
+    r.ciudad = r.region || (r.ciudad || "Otra");
+    if(!r.comuna) r.comuna = detectComuna(r);
+  });
+  S.records=recs;
+  assignCediColors();
+  approximateCoords();
+  buildCediPoints();
+  buildFilters();
+  onFilterChange();
+  enableUI();
+  $("#mapEmpty").classList.add("hidden");
+  $("#btnGeocode").classList.remove("hidden");
+  $("#geoPrecision").classList.remove("hidden");
+  $("#geoCfgWrap").classList.remove("hidden");
+  updateGeoStatus();
+  const nV=recs.filter(r=>r.region==="Valle de Aburrá").length;
+  const nB=recs.filter(r=>r.region==="Bogotá").length;
+  const cediTotal=Object.keys(S.cediColor).length;
+  const cediGeo=new Set(recs.filter(r=>r.cediLat!=null).map(r=>r.cedi)).size;
+  toast(`Base cargada: ${fmt(recs.length)} pedidos · CEDI ${fmt(cediTotal)} ubicados en mapa.`,"ok");
+}
+
+function assignCediColors(){
+  S.cediColor={};
+  const order=[...new Set(S.records.map(r=>r.cedi))];
+  order.forEach((c,i)=> S.cediColor[c]=CEDI_PALETTE[i%CEDI_PALETTE.length]);
+}
+
+function normalizeCOAddress(s){
+  let t=" "+stripAccents(s||"").toLowerCase()+" ";
+  t=t.replace(/\bkra?\b|\bcra?\b|\bcr\b|\bkr\b/g," carrera ")
+     .replace(/\bcll?\b|\bcl\b/g," calle ")
+     .replace(/\bavda?\b|\bav\b/g," avenida ")
+     .replace(/\bdiag\b|\bdg\b/g," diagonal ")
+     .replace(/\btransv?\b|\btv\b/g," transversal ")
+     .replace(/\baut\b/g," autopista ");
+  t=t.replace(/#/g," ").replace(/\bn(ro|o)?\.?\b/g," ");
+  t=t.replace(/\b(apto|apartamento|torre|int|interior|piso|casa|local|of|oficina|bloque|bl|mz|manzana|et|etapa|unidad|conj|conjunto|edificio|edif)\b.*$/,"");
+  t=t.replace(/\bbis\b/g," ").replace(/[^a-z0-9\s-]/g," ").replace(/\s+/g," ").trim();
+  return t;
+}
+
+function geoCandidates(rec){
+  const join = a => a.filter(Boolean).join(", ");
+  const muni=rec.municipio||"", reg=rec.region||"", pais="Colombia";
+  const addr=normalizeCOAddress(rec.dirEntrega);
+  const zoneBase = rec.comuna || (addr? addr.split(" ").slice(0,3).join(" ") : "");
+  const out=[];
+  if(addr) out.push(join([addr, muni, reg, pais]));
+  if(zoneBase) out.push(join([zoneBase, muni, reg, pais]));
+  if(!out.length && (muni||reg)) out.push(join([muni||reg, pais]));
+  return out;
+}
+const candKey = (rec,cand) => (rec.region||"")+"|"+norm(cand);
+const fetchTiers = c => S.geoMode==="exact" ? c.map((_,i)=>i) : (c.length>1?[1]:[0]);
+
+function hasGeo(r){
+  for(const cand of geoCandidates(r)){ const v=S.geocache[candKey(r,cand)]; if(v && inBox(v[0],v[1],r.region)) return true; }
+  return false;
+}
+function placeFromCache(r){
+  const c=geoCandidates(r);
+  for(let i=0;i<c.length;i++){
+    const v=S.geocache[candKey(r,c[i])];
+    if(v && inBox(v[0],v[1],r.region)){ r.lat=v[0]; r.lng=v[1]; r._approx=(i>0); return true; }
+  }
+  return false;
+}
+async function geoLookup(q, bias){
+  const vb = bias ? `&viewbox=${bias.lngMin},${bias.latMin},${bias.lngMax},${bias.latMax}` : "";
+  try{
+    const url = S.token
+      ? `https://us1.locationiq.com/v1/search?key=${encodeURIComponent(S.token)}&format=json&limit=1&countrycodes=co&q=${encodeURIComponent(q)}${vb}`
+      : `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&q=${encodeURIComponent(q)}${vb}`;
+    const r=await fetch(url,{headers:{"Accept-Language":"es"}});
+    if(r.ok){ const j=await r.json(); if(j&&j[0]) return [parseFloat(j[0].lat),parseFloat(j[0].lon)]; }
+  }catch(e){}
+  if(!S.token){
+    try{
+      const c = bias ? `&lat=${(bias.latMin+bias.latMax)/2}&lon=${(bias.lngMin+bias.lngMax)/2}` : "";
+      const r=await fetch(`https://photon.komoot.io/api/?limit=1&q=${encodeURIComponent(q)}${c}`);
+      if(r.ok){ const j=await r.json(); const f=j&&j.features&&j.features[0]; if(f&&f.geometry){ const co=f.geometry.coordinates; return [co[1],co[0]]; } }
+    }catch(e){}
+  }
+  return null;
+}
+
+function approximateCoords(){
+  for(const r of S.records){
+    r.lat=null; r.lng=null; r._approx=true;
+    const region=r.region;
+    if(r.fileLat!=null && r.fileLng!=null){ r.lat=r.fileLat; r.lng=r.fileLng; r._approx=false; continue; }
+    if(placeFromCache(r)) continue;
+    let c=null;
+    const comKey=norm(r.comuna);
+    if(comKey && CENTROIDS[comKey] && inBox(CENTROIDS[comKey][0],CENTROIDS[comKey][1],region)) c=CENTROIDS[comKey];
+    if(!c){ const munKey=norm(r.municipio); if(CENTROIDS[munKey] && inBox(CENTROIDS[munKey][0],CENTROIDS[munKey][1],region)) c=CENTROIDS[munKey]; }
+    if(!c && REGION_CENTROID[region]) c=REGION_CENTROID[region];
+    if(c){ const j=jitter(r.dirEntrega||r.cedi||Math.random()); r.lat=c[0]+j[0]; r.lng=c[1]+j[1]; }
+  }
+}
+
+function jitter(str){
+  let h=0; const s=str.toString();
+  for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; }
+  const a=((h%1000)/1000-0.5)*0.022;
+  const b=(((h>>>10)%1000)/1000-0.5)*0.022;
+  return [a,b];
+}
+
+function buildCediPoints(){
+  S.cediCoord = {};
+  const provided = {};
+  const groups = {};
+
+  for (const r of S.records) {
+    if (r.cediLat != null && r.cediLng != null) {
+      if (!provided[r.cedi]) provided[r.cedi] = [r.cediLat, r.cediLng];
+    }
+    if (r.lat != null && r.lng != null) {
+      (groups[r.cedi] = groups[r.cedi] || []).push(r);
+    }
+  }
+
+  const allCedis = new Set([
+    ...S.records.map(r=>r.cedi),
+    ...Object.keys(provided),
+    ...Object.keys(groups)
+  ]);
+
+  for (const cedi of allCedis) {
+    if (!cedi) continue;
+    // 1. Coordenada directa provista en el archivo
+    if (provided[cedi]) {
+      S.cediCoord[cedi] = provided[cedi];
+      continue;
+    }
+
+    // 2. Coordenada provista en la tabla maestra CEDI_MASTER_COORDS
+    const normName = norm(cedi);
+    let masterMatch = null;
+    for (const [masterKey, masterPt] of Object.entries(CEDI_MASTER_COORDS)) {
+      if (norm(masterKey) === normName || normName.includes(norm(masterKey)) || norm(masterKey).includes(normName)) {
+        masterMatch = masterPt;
+        break;
+      }
+    }
+
+    if (masterMatch) {
+      S.cediCoord[cedi] = masterMatch;
+      continue;
+    }
+
+    // 3. Promedio / Centroide como respaldo
+    const g = groups[cedi] || [];
+    if (!g.length) continue;
+    const la = g.reduce((s, r) => s + r.lat, 0) / g.length;
+    const lo = g.reduce((s, r) => s + r.lng, 0) / g.length;
+    S.cediCoord[cedi] = [la, lo];
+  }
+}
+
+/* ===== FILTROS CON CRUCE TOTAL: cada filtro reduce las opciones de los demás ===== */
+S.cediOff = new Set();   // CEDIs desmarcados por el usuario
+
+/* valores activos, opcionalmente excluyendo un filtro (para calcular SUS opciones) */
+function curFilters(except){
+  return {
+    ciudad:    except==="ciudad"    ? "" : $("#fCiudad").value,
+    municipio: except==="municipio" ? "" : $("#fMunicipio").value,
+    comuna:    except==="comuna"    ? "" : $("#fComuna").value,
+    useCedi:   except!=="cedi"
+  };
+}
+function matchRecords(fl){
+  const ds=S.dateStart, de=S.dateEnd;
+  return S.records.filter(r=>{
+    if(fl.ciudad && r.ciudad!==fl.ciudad) return false;
+    if(fl.municipio && r.municipio!==fl.municipio) return false;
+    if(fl.comuna && r.comuna!==fl.comuna) return false;
+    if(ds && (!r.fecha || r.fecha < ds)) return false;
+    if(de && (!r.fecha || r.fecha > de)) return false;
+    if(fl.useCedi && S.cediOff.has(r.cedi)) return false;
+    return true;
+  });
+}
+function rebuildFilterOptions(){
+  fillSelect($("#fCiudad"),"Todas",[...new Set(matchRecords(curFilters("ciudad")).map(r=>r.ciudad).filter(Boolean))].sort());
+  fillSelect($("#fMunicipio"),"Todos",[...new Set(matchRecords(curFilters("municipio")).map(r=>r.municipio).filter(Boolean))].sort());
+  fillSelect($("#fComuna"),"Todas",[...new Set(matchRecords(curFilters("comuna")).map(r=>r.comuna).filter(Boolean))].sort());
+  buildCediChecklist(matchRecords(curFilters("cedi")));
+}
+function buildFilters(){ S.cediOff.clear(); S.dateStart=null; S.dateEnd=null; S.calY=null; S.calM=null; updateRangeUI(); rebuildFilterOptions(); }
+function fillSelect(sel, allLabel, items){
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">${allLabel}</option>`+
+    items.map(it=> typeof it==="object" ? `<option value="${it.v}">${escHtml(it.t)}</option>` : `<option value="${escAttr(it)}">${escHtml(it)}</option>`).join("");
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function buildCediChecklist(subset){
+  const list=$("#cediList"); list.innerHTML="";
+  const counts={}; (subset||S.records).forEach(r=>counts[r.cedi]=(counts[r.cedi]||0)+1);
+  Object.keys(counts).sort().forEach(cedi=>{
+    const el=document.createElement("label"); el.className="multi-item";
+    el.innerHTML=`<input type="checkbox" value="${escAttr(cedi)}" ${S.cediOff.has(cedi)?"":"checked"}>
+      <span class="multi-swatch" style="background:${S.cediColor[cedi]||'#888'}"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(cedi)}</span>
+      <span class="cedi-solo" title="Ver solo esta tienda">solo</span>
+      <span style="color:var(--muted-2);font-variant-numeric:tabular-nums">${counts[cedi]}</span>`;
+    el.querySelector("input").onchange=e=>{ e.target.checked?S.cediOff.delete(cedi):S.cediOff.add(cedi); onFilterChange(); };
+    el.querySelector(".cedi-solo").onclick=ev=>{ ev.preventDefault(); ev.stopPropagation(); soloCedi(cedi); $("#cediPanel").classList.remove("open"); };
+    list.appendChild(el);
+  });
+  updateCediBtn(subset);
+}
+function selectedCedis(){ return [...new Set(S.records.map(r=>r.cedi))].filter(c=>!S.cediOff.has(c)); }
+function updateCediBtn(subset){
+  const names=[...new Set((subset||S.records).map(r=>r.cedi))];
+  const on=names.filter(c=>!S.cediOff.has(c));
+  const btn=$("#cediBtn");
+  if(S.cediOff.size===0) btn.textContent="Todos los CEDI";
+  else if(on.length===0) btn.textContent="Ningún CEDI";
+  else if(on.length===1) btn.textContent=on[0];
+  else btn.textContent=on.length+" CEDI seleccionados";
+}
+$("#cediBtn").onclick=()=>$("#cediPanel").classList.toggle("open");
+$("#cediAll").onclick=()=>{ S.cediOff.clear(); onFilterChange(); };
+$("#cediNone").onclick=()=>{ [...new Set(S.records.map(r=>r.cedi))].forEach(c=>S.cediOff.add(c)); onFilterChange(); };
+document.addEventListener("click",e=>{ if(!$("#cediMulti").contains(e.target)) $("#cediPanel").classList.remove("open"); });
+
+["fCiudad","fMunicipio","fComuna"].forEach(id=>{ $("#"+id).onchange=onFilterChange; });
+$("#btnReset").onclick=()=>{
+  ["fCiudad","fMunicipio","fComuna"].forEach(id=>$("#"+id).value="");
+  S.cediOff.clear();
+  $("#tblSearch").value="";S.search="";
+  setRange(null,null);          // limpia fechas y dispara onFilterChange
+  if($("#rangePanel").classList.contains("open")) renderCalendar();
+};
+
+/* ===== Selector de RANGO DE FECHAS (calendario + accesos rápidos) ===== */
+const DOW=["lun","mar","mié","jue","vie","sáb","dom"];
+const MESES_FULL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const startOfDay=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const endOfDay=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999);
+const fmtD=d=>d?d.toLocaleDateString("es-CO"):"";
+function dataBounds(){ let mn=null,mx=null; for(const r of S.records){ if(r.fecha){ if(!mn||r.fecha<mn)mn=r.fecha; if(!mx||r.fecha>mx)mx=r.fecha; } } return [mn,mx]; }
+function setRange(a,b){ S.dateStart=a?startOfDay(a):null; S.dateEnd=b?endOfDay(b):null; updateRangeUI(); onFilterChange(); }
+function updateRangeUI(){
+  const btn=$("#rangeBtn"), hdr=$("#rangeHeader");
+  let txt;
+  if(!S.dateStart && !S.dateEnd) txt="Todas las fechas";
+  else { const s=S.dateStart?fmtD(S.dateStart):"…", e=S.dateEnd?fmtD(S.dateEnd):s; txt=`${s} – ${e}`; }
+  if(btn) btn.textContent=txt; if(hdr) hdr.textContent=txt;
+  markPresetActive();
+}
+const PRESETS=[
+  ["Todos",()=>[null,null]],
+  ["Hoy",()=>{const t=new Date();return [t,t];}],
+  ["Ayer",()=>{const t=new Date();t.setDate(t.getDate()-1);return [t,t];}],
+  ["Esta semana",()=>weekRange(0)],
+  ["Semana anterior",()=>weekRange(-1)],
+  ["Últimos 7 días",()=>{const e=new Date();const s=new Date();s.setDate(s.getDate()-6);return [s,e];}],
+  ["Este mes",()=>monthRange(0)],
+  ["Mes anterior",()=>monthRange(-1)]
+];
+function weekRange(off){ const t=new Date(); const dow=(t.getDay()+6)%7; const mon=new Date(t); mon.setDate(t.getDate()-dow+off*7); const sun=new Date(mon); sun.setDate(mon.getDate()+6); return [mon,sun]; }
+function monthRange(off){ const t=new Date(); return [new Date(t.getFullYear(),t.getMonth()+off,1), new Date(t.getFullYear(),t.getMonth()+off+1,0)]; }
+function buildPresets(){
+  const box=$("#rangePresets"); if(!box) return; box.innerHTML="";
+  PRESETS.forEach((p,i)=>{ const b=document.createElement("button"); b.type="button"; b.textContent=p[0]; b.dataset.i=i; b.onclick=()=>applyPreset(i); box.appendChild(b); });
+}
+function applyPreset(i){ const [a,b]=PRESETS[i][1](); if(a){ S.calY=a.getFullYear(); S.calM=a.getMonth(); } setRange(a,b); renderCalendar(); }
+function markPresetActive(){ $$("#rangePresets button").forEach(b=>b.classList.remove("active")); if(!S.dateStart&&!S.dateEnd){ const t=$$("#rangePresets button")[0]; if(t)t.classList.add("active"); } }
+function initCalView(){ if(S.calY==null){ const [,mx]=dataBounds(); const base=S.dateStart||mx||new Date(); S.calY=base.getFullYear(); S.calM=base.getMonth(); } }
+function renderCalendar(){
+  if(S.calY==null) initCalView();
+  const y=S.calY, m=S.calM;
+  $("#calTitle").textContent=`${MESES_FULL[m]} ${y}`;
+  const grid=$("#calGrid"); grid.innerHTML="";
+  DOW.forEach(d=>{ const el=document.createElement("div"); el.className="cal-dow"; el.textContent=d; grid.appendChild(el); });
+  const startDow=(new Date(y,m,1).getDay()+6)%7;
+  const dim=new Date(y,m+1,0).getDate();
+  const today=+startOfDay(new Date());
+  const s=S.dateStart?+startOfDay(S.dateStart):null, e=S.dateEnd?+startOfDay(S.dateEnd):null;
+  const cells=[];
+  for(let i=0;i<startDow;i++) cells.push({d:new Date(y,m,1-startDow+i),out:true});
+  for(let d=1;d<=dim;d++) cells.push({d:new Date(y,m,d),out:false});
+  while(cells.length<42){ const l=cells[cells.length-1].d; cells.push({d:new Date(l.getFullYear(),l.getMonth(),l.getDate()+1),out:true}); }
+  cells.forEach(c=>{
+    const el=document.createElement("div"); el.className="cal-day"+(c.out?" out":"");
+    const t=+startOfDay(c.d); el.textContent=c.d.getDate();
+    if(s&&e){ if(t>=s&&t<=e) el.classList.add("inrange"); if(t===s||t===e) el.classList.add("edge"); }
+    else if(s&&t===s) el.classList.add("edge");
+    if(t===today) el.classList.add("today");
+    el.onclick=()=>pickDay(c.d);
+    grid.appendChild(el);
+  });
+}
+function pickDay(day){
+  if(!S.dateStart || (S.dateStart && S.dateEnd)){ S.dateStart=startOfDay(day); S.dateEnd=null; }
+  else if(startOfDay(day) < S.dateStart){ S.dateEnd=endOfDay(S.dateStart); S.dateStart=startOfDay(day); }
+  else S.dateEnd=endOfDay(day);
+  updateRangeUI(); renderCalendar(); onFilterChange();
+}
+$("#calPrev").onclick=()=>{ if(S.calY==null)initCalView(); S.calM--; if(S.calM<0){S.calM=11;S.calY--;} renderCalendar(); };
+$("#calNext").onclick=()=>{ if(S.calY==null)initCalView(); S.calM++; if(S.calM>11){S.calM=0;S.calY++;} renderCalendar(); };
+$("#rangeBtn").onclick=()=>{ const p=$("#rangePanel"); const open=p.classList.toggle("open"); if(open){ initCalView(); buildPresets(); renderCalendar(); markPresetActive(); } };
+$("#rangeClear").onclick=()=>{ setRange(null,null); renderCalendar(); };
+$("#rangeApply").onclick=()=>{ $("#rangePanel").classList.remove("open"); };
+document.addEventListener("click",e=>{ if(!$("#rangePick").contains(e.target)) $("#rangePanel").classList.remove("open"); });
+
+function applyFilters(){ S.filtered=matchRecords(curFilters(null)); }
+
+let _raf=null;
+function onFilterChange(){
+  if(_raf) cancelAnimationFrame(_raf);
+  _raf=requestAnimationFrame(()=>{
+    rebuildFilterOptions();
+    applyFilters();
+    renderKPIs();
+    renderCharts();
+    renderMap();
+    S.page=1; renderTable();
+    $("#mapHint").textContent=`${fmt(S.filtered.length)} pedidos en vista`;
+    updateDateRange();
+  });
+}
+function updateDateRange(){
+  const f=S.filtered;
+  let mn=null, mx=null, noDate=0, noGeo=0;
+  for(const r of f){
+    if(r.fecha){ if(mn==null||r.fecha<mn) mn=r.fecha; if(mx==null||r.fecha>mx) mx=r.fecha; } else noDate++;
+    if(r.lat==null) noGeo++;
+  }
+  const parts=[];
+  if(mn) parts.push(`Rango en vista: ${mn.toLocaleDateString("es-CO")} → ${mx.toLocaleDateString("es-CO")}`);
+  if(noDate) parts.push(`${fmt(noDate)} sin fecha`);
+  if(noGeo) parts.push(`${fmt(noGeo)} sin ubicar en el mapa`);
+  $("#dateRange").textContent=parts.join("  ·  ");
+}
+
+function renderKPIs(){
+  const f=S.filtered;
+  const total=f.length;
+  const cedis=new Set(f.map(r=>r.cedi));
+  const muns=new Set(f.map(r=>r.municipio).filter(Boolean));
+  const coms=new Set(f.map(r=>r.comuna).filter(Boolean));
+  const med=f.filter(r=>norm(r.municipio)==="medellin").length;
+  const bog=f.filter(r=>norm(r.municipio).includes("bogota")||r.ciudad==="Bogotá").length;
+  $("#kpiPedidos").textContent=fmt(total);
+  $("#kpiPedidosSub").textContent = total===S.records.length ? "base completa" : "del filtro actual";
+  $("#kpiCedi").textContent=fmt(cedis.size);
+  $("#kpiMun").textContent=fmt(muns.size);
+  $("#kpiCom").textContent=fmt(coms.size);
+  $("#kpiMed").textContent=fmt(med);
+  $("#kpiBog").textContent=fmt(bog);
+  $("#kpiMedPct").textContent = total? (100*med/total).toFixed(1)+"% del total":"—";
+  $("#kpiBogPct").textContent = total? (100*bog/total).toFixed(1)+"% del total":"—";
+}
+
+const CH_BASE={
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{backgroundColor:"#1E242E",borderColor:"#2A313C",borderWidth:1,titleColor:"#E8EBF0",bodyColor:"#C9CFD8",padding:10}},
+  scales:{
+    x:{ticks:{color:"#8C95A3",font:{size:11}},grid:{color:"rgba(255,255,255,.04)"}},
+    y:{ticks:{color:"#8C95A3",font:{size:11}},grid:{color:"rgba(255,255,255,.04)"},beginAtZero:true}
+  }
+};
+function topN(map,n){ return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n); }
+
+function renderCharts(){
+  const f=S.filtered;
+  const byCedi={},byMun={},byCom={},byMes=new Array(12).fill(0);
+  for(const r of f){
+    byCedi[r.cedi]=(byCedi[r.cedi]||0)+1;
+    if(r.municipio) byMun[r.municipio]=(byMun[r.municipio]||0)+1;
+    if(r.comuna) byCom[r.comuna]=(byCom[r.comuna]||0)+1;
+    if(r.mes!=null) byMes[r.mes]++;
+  }
+  const ce=Object.entries(byCedi).sort((a,b)=>b[1]-a[1]);
+  drawBar("chCedi", ce.map(x=>x[0]), ce.map(x=>x[1]), ce.map(x=>S.cediColor[x[0]]));
+  const mu=topN(byMun,12);
+  drawBar("chMun", mu.map(x=>x[0]), mu.map(x=>x[1]), "#3B82F6");
+  const co=topN(byCom,12);
+  drawBar("chCom", co.map(x=>x[0]), co.map(x=>x[1]), "#A78BFA");
+  drawLine("chMes", MESES, byMes);
+
+  const dated=f.filter(r=>r.fecha);
+  const monthKeys=new Set(dated.map(r=>r.anio+"-"+r.mes));
+  let dLabels=[], dData=[], dHint="";
+  if(monthKeys.size===1 && dated.length){          // todo cae en un solo mes → días 1..N
+    const y=dated[0].anio, mo=dated[0].mes, dim=new Date(y,mo+1,0).getDate();
+    dLabels=Array.from({length:dim},(_,i)=>String(i+1));
+    dData=new Array(dim).fill(0);
+    dated.forEach(r=>dData[r.fecha.getDate()-1]++);
+    dHint=`${MESES[mo]} ${y}`;
+  } else {                                          // varios meses
+    const dc={}; dated.forEach(r=>{ const k=r.fecha.getFullYear()+"-"+String(r.fecha.getMonth()+1).padStart(2,"0")+"-"+String(r.fecha.getDate()).padStart(2,"0"); dc[k]=(dc[k]||0)+1; });
+    const keys=Object.keys(dc).sort();
+    if(keys.length && keys.length<=92){             // serie diaria por fecha
+      dLabels=keys.map(k=>{ const p=k.split("-"); return p[2]+"/"+p[1]; });
+      dData=keys.map(k=>dc[k]); dHint="serie diaria";
+    } else {                                        // agregado por día del mes
+      dLabels=Array.from({length:31},(_,i)=>String(i+1));
+      dData=new Array(31).fill(0);
+      dated.forEach(r=>dData[r.fecha.getDate()-1]++);
+      dHint="agregado por día del mes · acota el rango para ver el detalle";
+    }
+  }
+  const activeDays=dData.filter(v=>v>0).length, totD=dData.reduce((s,v)=>s+v,0);
+  $("#diaHint").textContent = dHint + (activeDays? `  ·  prom. ${fmt(Math.round(totD/activeDays))}/día activo`:"");
+  drawDaily("chDia", dLabels, dData);
+}
+
+function drawDaily(id,labels,data){
+  const asLine = labels.length>31;
+  const ctx=document.getElementById(id);
+  if(S.charts[id]) S.charts[id].destroy();
+  const ds = asLine
+    ? {data,borderColor:"#FFCE1F",backgroundColor:"rgba(255,206,31,.12)",fill:true,tension:.3,pointRadius:2,pointBackgroundColor:"#FFCE1F",borderWidth:2}
+    : {data,backgroundColor:"#FFCE1F",borderRadius:3,maxBarThickness:26};
+  S.charts[id]=new Chart(ctx,{type:asLine?"line":"bar",data:{labels,datasets:[ds]},options:CH_BASE});
+}
+
+function drawBar(id,labels,data,colors){
+  const ctx=document.getElementById(id);
+  if(S.charts[id]){ S.charts[id].data.labels=labels; S.charts[id].data.datasets[0].data=data;
+    S.charts[id].data.datasets[0].backgroundColor=colors; S.charts[id].update("none"); return; }
+  S.charts[id]=new Chart(ctx,{type:"bar",
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4,maxBarThickness:38}]},
+    options:{...CH_BASE, scales:{...CH_BASE.scales, x:{...CH_BASE.scales.x, ticks:{...CH_BASE.scales.x.ticks, maxRotation:60,minRotation:0, callback:function(v){const l=this.getLabelForValue(v);return l.length>14?l.slice(0,13)+"…":l;}}}}}});
+}
+
+function drawLine(id,labels,data){
+  const ctx=document.getElementById(id);
+  if(S.charts[id]){ S.charts[id].data.datasets[0].data=data; S.charts[id].update("none"); return; }
+  S.charts[id]=new Chart(ctx,{type:"line",
+    data:{labels,datasets:[{data,borderColor:"#FFCE1F",backgroundColor:"rgba(255,206,31,.12)",fill:true,tension:.32,pointRadius:3,pointBackgroundColor:"#FFCE1F",borderWidth:2}]},
+    options:CH_BASE});
+}
+
+let map, tileLayer, deliveryCluster, deliveryPlain, originLayer, lineLayer, muniLayer, comLayer, heatLayer;
+function initMap(){
+  map=L.map("map",{preferCanvas:true,zoomControl:true}).setView([5.5,-74.7],7);
+  tileLayer=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",{
+    attribution:'Tiles © Esri', maxZoom:16
+  }).addTo(map);
+  muniLayer=L.layerGroup();          // límites de municipios
+  comLayer=L.layerGroup();           // límites de comunas / localidades
+  deliveryCluster=L.markerClusterGroup({chunkedLoading:true,maxClusterRadius:48,spiderfyOnMaxZoom:true});
+  deliveryPlain=L.layerGroup();
+  originLayer=L.layerGroup();
+  lineLayer=L.layerGroup();
+  map.on("popupopen",e=>{ const n=e.popup._contentNode; if(!n) return; const b=n.querySelector(".pop-solo"); if(b) b.onclick=()=>soloCedi(b.dataset.c); });
+}
+const LINE_CAP=600;
+
+function renderMap(){
+  if(!map) initMap();
+  deliveryCluster.clearLayers(); deliveryPlain.clearLayers();
+  originLayer.clearLayers(); lineLayer.clearLayers();
+  map.removeLayer(deliveryCluster); map.removeLayer(deliveryPlain);
+  map.removeLayer(originLayer); map.removeLayer(lineLayer);
+  if(heatLayer){ map.removeLayer(heatLayer); heatLayer=null; }
+
+  const showOrigins=$("#tgOrigins").checked, showDel=$("#tgDeliveries").checked;
+  const showLines=$("#tgLines").checked, useCluster=$("#tgCluster").checked;
+  const f=S.filtered.filter(r=>r.lat!=null);
+
+  // 1. Puntos de Entrega (Clientes)
+  if(showDel){
+    const target = useCluster ? deliveryCluster : deliveryPlain;
+    for(const r of f){
+      const col=S.cediColor[r.cedi]||"#888";
+      const mk=L.circleMarker([r.lat,r.lng],{radius:r._approx?4:5,color:col,weight:1,fillColor:col,fillOpacity:r._approx?.45:.85});
+      mk.bindPopup(popupHtml(r,col));
+      target.addLayer(mk);
+    }
+    map.addLayer(target);
+  }
+
+  // 1b. Mapa de calor (densidad de pedidos)
+  buildHeat();
+
+  // 2. Tiendas / Puntos de Salida CEDI (Icono SVG Tienda / Almacén)
+  if(showOrigins){
+    const activeCedis=new Set(f.map(r=>r.cedi));
+    for(const cedi of activeCedis){
+      const c=S.cediCoord[cedi]; if(!c) continue;
+      const col=S.cediColor[cedi]||"#FFCE1F";
+      const mk=L.marker([c[0],c[1]],{icon:storeIcon(col)});
+      const n=f.filter(r=>r.cedi===cedi).length;
+      mk.bindPopup(`<div class="pop-t"><span class="dot" style="background:${col}"></span>${escHtml(cedi)}</div>
+        <div class="pop-row"><b>Punto de salida (Tienda CEDI)</b></div>
+        <div class="pop-row">Ubicación física: ${c[0].toFixed(4)}, ${c[1].toFixed(4)}</div>
+        <div class="pop-row"><b>${fmt(n)}</b> entregas realizadas en el filtro</div>
+        <button class="pop-solo" data-c="${escAttr(cedi)}">Ver solo esta tienda</button>`);
+      originLayer.addLayer(mk);
+    }
+    map.addLayer(originLayer);
+  }
+
+  // 3. Conexiones Origen-Destino
+  if(showLines && showDel){
+    if(f.length>LINE_CAP){
+      toast(`Muchos pedidos (${fmt(f.length)}). Filtra un CEDI para ver líneas.`,"");
+    }else{
+      for(const r of f){
+        const c=S.cediCoord[r.cedi]; if(!c) continue;
+        const col=S.cediColor[r.cedi]||"#888";
+        L.polyline([[c[0],c[1]],[r.lat,r.lng]],{color:col,weight:1.2,opacity:.4}).addTo(lineLayer);
+      }
+      map.addLayer(lineLayer);
+    }
+  }
+  renderLegend(f);
+  updateZones();
+  if(f.length){
+    const pts=f.map(r=>[r.lat,r.lng]);
+    Object.values(S.cediCoord).forEach(c=>pts.push(c));
+    try{ map.fitBounds(L.latLngBounds(pts).pad(0.12),{maxZoom:13}); }catch(e){}
+  }
+}
+
+/* ================= LÍMITES GEOGRÁFICOS (OpenStreetMap, cacheados) ================= */
+const ZONE_KEY="qh_zones_v2";
+try{ S.zoneCache=JSON.parse(localStorage.getItem(ZONE_KEY)||"{}"); }catch(e){ S.zoneCache={}; }
+function saveZones(){ try{ localStorage.setItem(ZONE_KEY,JSON.stringify(S.zoneCache)); }catch(e){} }
+const zoneStyle={
+  muni:{color:"#0F62FE",weight:2,fill:true,fillColor:"#0F62FE",fillOpacity:0.05,interactive:false},
+  com:{color:"#8A3FFC",weight:1.2,dashArray:"4 3",fill:true,fillColor:"#8A3FFC",fillOpacity:0.05,interactive:false}
+};
+const zKey=(kind,name,region)=>kind+"|"+(region||"")+"|"+norm(name);
+function zoneNames(kind){
+  const m=new Map();
+  for(const r of S.filtered){
+    const name = kind==="muni" ? r.municipio : r.comuna;
+    if(!name) continue;
+    const k=zKey(kind,name,r.region);
+    if(!m.has(k)) m.set(k,{name,region:r.region});
+  }
+  return m;
+}
+function zoneQuery(kind,name,region){
+  if(kind==="muni") return `${name}, ${region==="Bogotá"?"Bogotá D.C.":"Antioquia"}, Colombia`;
+  return region==="Bogotá" ? `Localidad ${name}, Bogotá, Colombia` : `${name}, Medellín, Antioquia, Colombia`;
+}
+function geomCentroid(g){
+  let ring=null;
+  if(g.type==="Polygon") ring=g.coordinates[0];
+  else if(g.type==="MultiPolygon") ring=g.coordinates[0]&&g.coordinates[0][0];
+  if(!ring||!ring.length) return null;
+  let sx=0,sy=0; for(const c of ring){ sx+=c[0]; sy+=c[1]; }
+  return [sy/ring.length, sx/ring.length];   // [lat,lng]
+}
+async function fetchZone(kind,name,region){
+  const b=REGION_BOX[region];
+  const vb=b?`&viewbox=${b.lngMin},${b.latMin},${b.lngMax},${b.latMax}`:"";
+  const score=o=>((o.class==="boundary"&&o.type==="administrative")?3:0)+(o.class==="place"?1:0);
+  const tryQ=async q=>{
+    try{
+      const url=`https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&addressdetails=1&limit=8&countrycodes=co&q=${encodeURIComponent(q)}${vb}`;
+      const r=await fetch(url,{headers:{"Accept-Language":"es"}});
+      if(!r.ok) return null;
+      const arr=await r.json();
+      const polys=arr.filter(o=>o.geojson&&(o.geojson.type==="Polygon"||o.geojson.type==="MultiPolygon"))
+                     .sort((a,c)=>score(c)-score(a));
+      for(const o of polys){
+        const ce=geomCentroid(o.geojson);
+        if(!region || (ce&&inBox(ce[0],ce[1],region))) return o.geojson;   // valida que caiga en la región
+      }
+    }catch(e){}
+    return null;
+  };
+  const dept = region==="Bogotá" ? "Bogotá D.C." : "Antioquia";
+  const queries = kind==="muni"
+    ? [`${name}, ${dept}, Colombia`, `municipio ${name}, ${dept}, Colombia`, `${name}, Colombia`]
+    : (region==="Bogotá"
+        ? [`Localidad ${name}, Bogotá, Colombia`, `${name}, Bogotá, Colombia`]
+        : [`${name}, Medellín, Antioquia, Colombia`, `${name}, Antioquia, Colombia`]);
+  for(let i=0;i<queries.length;i++){
+    if(i>0) await sleep(1100);          // respeta el límite entre reintentos
+    const g=await tryQ(queries[i]);
+    if(g) return g;
+  }
+  return null;
+}
+function drawZones(kind){
+  const layer=kind==="muni"?muniLayer:comLayer;
+  layer.clearLayers();
+  const missing=[];
+  for(const [k,info] of zoneNames(kind)){
+    const g=S.zoneCache[k];
+    if(g===undefined){ missing.push([k,info]); continue; }
+    if(!g) continue;
+    const gj=L.geoJSON({type:"Feature",geometry:g,properties:{}},{style:zoneStyle[kind]});
+    gj.bindTooltip(info.name,{permanent:kind==="muni",direction:"center",className:"zone-label",opacity:1});
+    layer.addLayer(gj);
+  }
+  return missing;
+}
+async function fetchZoneQueue(kind,missing){
+  if(S.zoneFetching) return;
+  S.zoneFetching=true;
+  let done=0;
+  for(const [k,info] of missing){
+    if(!$("#tg"+(kind==="muni"?"Muni":"Com")).checked) break;
+    $("#zoneStatus").textContent=`Cargando límites… ${++done}/${missing.length}`;
+    S.zoneCache[k]=await fetchZone(kind,info.name,info.region);
+    saveZones(); drawZones(kind);
+    await sleep(1100);
+  }
+  $("#zoneStatus").textContent="";
+  S.zoneFetching=false;
+  updateZones();   // procesa el otro nivel si también está activo y le faltan
+}
+function updateZones(){
+  if(!map) return;
+  const mOn=$("#tgMuni").checked, cOn=$("#tgCom").checked;
+  if(mOn){ if(!map.hasLayer(muniLayer)) map.addLayer(muniLayer); const miss=drawZones("muni"); if(miss.length&&!S.zoneFetching) fetchZoneQueue("muni",miss); }
+  else { if(map.hasLayer(muniLayer)) map.removeLayer(muniLayer); muniLayer&&muniLayer.clearLayers(); }
+  if(cOn){ if(!map.hasLayer(comLayer)) map.addLayer(comLayer); const miss=drawZones("com"); if(miss.length&&!S.zoneFetching) fetchZoneQueue("com",miss); }
+  else { if(map.hasLayer(comLayer)) map.removeLayer(comLayer); comLayer&&comLayer.clearLayers(); }
+}
+$("#tgMuni").onchange=updateZones;
+$("#tgCom").onchange=updateZones;
+
+/* Mapa de calor de pedidos (densidad de entregas del filtro actual) */
+function buildHeat(){
+  if(!map) return;
+  if(heatLayer){ map.removeLayer(heatLayer); heatLayer=null; }
+  if(!$("#tgHeat").checked || !L.heatLayer) return;
+  const f=S.filtered.filter(r=>r.lat!=null);
+  if(!f.length) return;
+  // Densidad por celda (~110 m) contada SOBRE EL FILTRO actual
+  const grid={};
+  for(const r of f){
+    const k=r.lat.toFixed(3)+","+r.lng.toFixed(3);
+    (grid[k]||(grid[k]={lat:r.lat,lng:r.lng,c:0})).c++;
+  }
+  const cells=Object.values(grid);
+  // max relativo al filtro (percentil 92) → el calor se re-escala y no se ve débil con pocos pedidos
+  const counts=cells.map(c=>c.c).sort((a,b)=>a-b);
+  const maxC=Math.max(2, counts[Math.min(counts.length-1, Math.floor(counts.length*0.92))]||1);
+  heatLayer=L.heatLayer(cells.map(c=>[c.lat,c.lng,c.c]),{
+    radius:26, blur:20, minOpacity:0.4, max:maxC, maxZoom:15,
+    gradient:{0.2:"#2c7fb8",0.45:"#41b6c4",0.65:"#7fcdbb",0.82:"#fdae61",1.0:"#d7191c"}
+  });
+  map.addLayer(heatLayer);
+}
+$("#tgHeat").onchange=buildHeat;
+
+/* ===== Vista de pantalla completa (mapa + filtros como barra superior) ===== */
+function enterFS(){
+  if($("#fsRoot").classList.contains("on")) return;
+  const body=$("#fsRoot").querySelector(".fs-body");
+  ["filterPanel","mapPanel"].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const ph=document.createElement("div"); ph.id="ph_"+id; ph.style.display="none";
+    el.parentNode.insertBefore(ph, el);
+    body.appendChild(el);
+  });
+  $("#fsRoot").classList.add("on"); document.body.classList.add("fs-lock");
+  $("#fsHint").textContent = $("#mapHint").textContent;
+  setTimeout(()=>{ if(map){ map.invalidateSize(); renderMap(); } }, 80);
+}
+function exitFS(){
+  ["filterPanel","mapPanel"].forEach(id=>{
+    const el=document.getElementById(id), ph=document.getElementById("ph_"+id);
+    if(el && ph){ ph.parentNode.insertBefore(el, ph); ph.remove(); }
+  });
+  $("#fsRoot").classList.remove("on"); document.body.classList.remove("fs-lock");
+  setTimeout(()=>{ if(map){ map.invalidateSize(); renderMap(); } }, 80);
+}
+$("#btnFS").onclick=enterFS;
+$("#fsExit").onclick=exitFS;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#fsRoot").classList.contains("on")) exitFS(); });
+
+/* Aislar una sola tienda (deja solo sus pedidos); "Todos" en el panel CEDI restablece */
+function soloCedi(name){
+  const all=[...new Set(S.records.map(r=>r.cedi))];
+  S.cediOff=new Set(all.filter(c=>c!==name));
+  if(map) map.closePopup();
+  onFilterChange();
+}
+
+/* Icono SVG de Tienda / Almacén para los CEDI */
+function storeIcon(color){
+  const svgStore = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 9l1-5h16l1 5"/>
+    <path d="M3 11v9a1 1 0 001 1h16a1 1 0 001-1v-9"/>
+    <path d="M9 21v-6a1 1 0 011-1h4a1 1 0 011 1v6"/>
+  </svg>`;
+
+  return L.divIcon({
+    className: "",
+    html: `<div class="store-pin" style="background:${color};">
+            ${svgStore}
+           </div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -11]
+  });
+}
+
+function popupHtml(r,col){
+  const f=r.fecha?r.fecha.toLocaleDateString("es-CO"):"—";
+  return `<div class="pop-t"><span class="dot" style="background:${col}"></span>${escHtml(r.cedi)}</div>
+    <div class="pop-row"><b>Entrega:</b> ${escHtml(r.dirEntrega||"—")}</div>
+    <div class="pop-row"><b>Municipio:</b> ${escHtml(r.municipio||"—")}${r.comuna?" · "+escHtml(r.comuna):""}</div>
+    <div class="pop-row"><b>Fecha:</b> ${f}</div>
+    ${r._approx?'<div class="pop-row" style="color:#FCA5A5;font-size:11px">Ubicación aproximada (por zona)</div>':''}`;
+}
+
+function renderLegend(f){
+  const counts={}; f.forEach(r=>counts[r.cedi]=(counts[r.cedi]||0)+1);
+  const items=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const box=$("#legend");
+  if(!items.length){ box.classList.remove("on"); return; }
+  $("#legendItems").innerHTML=items.map(([c,n])=>
+    `<div class="lg-item"><span class="lg-dot" style="background:${S.cediColor[c]}"></span>
+      <span class="lg-name">${escHtml(c)}</span><span class="lg-count">${fmt(n)}</span></div>`).join("");
+  box.classList.add("on");
+}
+["tgOrigins","tgDeliveries","tgLines","tgCluster"].forEach(id=>$("#"+id).addEventListener("change",renderMap));
+
+function updateGeoStatus(){
+  const total=S.filtered.length;
+  const withGeo=S.filtered.filter(r=>hasGeo(r)||r.fileLat!=null).length;
+  const cached=Object.keys(S.geocache).length;
+  $("#geoStatus").textContent = total
+    ? `${fmt(withGeo)}/${fmt(total)} ubicados por dirección · resto por zona · ${fmt(cached)} en caché`
+    : "";
+}
+$("#btnGeocode").onclick=geocodeVisible;
+$("#btnGeoStop").onclick=()=>{ S.geoStop=true; };
+$("#geoPrecision").value=S.geoMode;
+$("#geoPrecision").onchange=e=>{ S.geoMode=e.target.value; approximateCoords(); buildCediPoints(); renderMap(); updateGeoStatus(); };
+$("#btnGeoCfg").onclick=()=>$("#geoCfgPanel").classList.toggle("open");
+$("#geoToken").value=S.token;
+$("#geoToken").oninput=e=>{ S.token=e.target.value.trim(); try{localStorage.setItem("qh_geotoken",S.token);}catch(e2){} };
+document.addEventListener("click",e=>{ if(!$("#geoCfgWrap").contains(e.target)) $("#geoCfgPanel").classList.remove("open"); });
+
+async function geocodeVisible(){
+  if(S.geocoding) return;
+  const targets=S.filtered.filter(r=>r.dirEntrega && r.fileLat==null && !hasGeo(r));
+  const estKeys=new Set();
+  for(const r of targets){
+    const c=geoCandidates(r);
+    for(const i of fetchTiers(c)){ const k=candKey(r,c[i]); if(!(k in S.geocache)){ estKeys.add(k); break; } }
+  }
+  const est=estKeys.size;
+  if(!est){ toast("No hay direcciones nuevas por geocodificar en esta vista.",""); return; }
+  if(est>400 && !confirm(`Se consultarán ~${fmt(est)} ubicaciones (~1/seg ≈ ${Math.ceil(est/60)} min). ¿Continuar?`)) return;
+
+  S.geocoding=true; S.geoStop=false;
+  $("#btnGeocode").disabled=true; $("#btnGeoStop").classList.remove("hidden");
+  const prog=$("#geoProgress"); prog.classList.add("on");
+  const attempted=new Set(); let done=0;
+  for(const r of targets){
+    if(S.geoStop) break;
+    if(hasGeo(r)) continue;
+    const c=geoCandidates(r), bias=REGION_BOX[r.region];
+    for(const i of fetchTiers(c)){
+      if(S.geoStop) break;
+      const k=candKey(r,c[i]);
+      if(k in S.geocache){ if(S.geocache[k]) break; else continue; }
+      if(attempted.has(k)) continue;
+      attempted.add(k);
+      const res=await geoLookup(c[i], bias);
+      S.geocache[k] = (res && inBox(res[0],res[1],r.region)) ? res : null;
+      done++;
+      prog.firstElementChild.style.width=Math.min(100,100*done/est)+"%";
+      $("#geoStatus").textContent=`Geocodificando ${fmt(done)}/${fmt(est)}…`;
+      await sleep(S.token?420:1050);
+      if(S.geocache[k]) break;
+    }
+  }
+  saveGeocache();
+  approximateCoords();
+  buildCediPoints();
+  S.geocoding=false;
+  $("#btnGeocode").disabled=false; $("#btnGeoStop").classList.add("hidden");
+  prog.classList.remove("on"); prog.firstElementChild.style.width="0";
+  renderMap(); updateGeoStatus();
+  const geo=S.filtered.filter(r=>hasGeo(r)||r.fileLat!=null).length;
+  toast(`Geocodificación: ${fmt(done)} consultas · ${fmt(geo)}/${fmt(S.filtered.length)} pedidos ubicados por dirección o zona.`, geo?"ok":"err");
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- TABLA ---------- */
+const COLS=[
+  {k:"fecha",t:"Fecha",get:r=>r.fecha?r.fecha.toLocaleDateString("es-CO"):"", sort:r=>r.fecha?r.fecha.getTime():0},
+  {k:"cedi",t:"CEDI",cedi:true},
+  {k:"dirRecogida",t:"Dir. recogida"},
+  {k:"dirEntrega",t:"Dir. entrega"},
+  {k:"ciudad",t:"Ciudad"},
+  {k:"municipio",t:"Municipio"},
+  {k:"comuna",t:"Comuna"}
+];
+function buildThead(){
+  $("#theadRow").innerHTML=COLS.map(c=>
+    `<th data-k="${c.k}">${c.t}<span class="arrow">↕</span></th>`).join("");
+  $$("#theadRow th").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(S.sort.key===k) S.sort.dir*=-1; else {S.sort.key=k;S.sort.dir=1;}
+    renderTable();
+  });
+}
+$("#tblSearch").oninput=e=>{ S.search=norm(e.target.value); S.page=1; renderTable(); };
+$("#pageSize").onchange=e=>{ S.pageSize=+e.target.value; S.page=1; renderTable(); };
+
+function getRows(){
+  let rows=S.filtered;
+  if(S.search){
+    rows=rows.filter(r=> norm(r.cedi+" "+r.dirEntrega+" "+r.dirRecogida+" "+r.municipio+" "+r.comuna+" "+r.ciudad).includes(S.search));
+  }
+  const col=COLS.find(c=>c.k===S.sort.key)||COLS[0];
+  const val = col.sort || (r=>norm((r[col.k]||"")+""));
+  rows=[...rows].sort((a,b)=>{ const va=val(a),vb=val(b); return (va<vb?-1:va>vb?1:0)*S.sort.dir; });
+  return rows;
+}
+function renderTable(){
+  const rows=getRows();
+  const total=rows.length, pages=Math.max(1,Math.ceil(total/S.pageSize));
+  if(S.page>pages) S.page=pages;
+  const start=(S.page-1)*S.pageSize, slice=rows.slice(start,start+S.pageSize);
+  const tb=$("#tbody");
+  tb.innerHTML=slice.map(r=>`<tr>`+COLS.map(c=>{
+    if(c.cedi){ const col=S.cediColor[r.cedi]||"#888";
+      return `<td><span class="cedi-chip"><span class="dot" style="background:${col}"></span>${escHtml(r.cedi)}</span></td>`; }
+    const v=c.get?c.get(r):(r[c.k]||"");
+    return `<td>${escHtml(v)}</td>`;
+  }).join("")+`</tr>`).join("");
+  $$("#theadRow th").forEach(th=>{
+    const on=th.dataset.k===S.sort.key; th.classList.toggle("sorted",on);
+    th.querySelector(".arrow").textContent = on?(S.sort.dir>0?"↑":"↓"):"↕";
+  });
+  $("#rowsInfo").textContent = total? `${fmt(start+1)}–${fmt(Math.min(start+S.pageSize,total))} de ${fmt(total)}` : "0 registros";
+  renderPager(pages);
+  updateGeoStatus();
+}
+function renderPager(pages){
+  const p=S.page, el=$("#pager");
+  if(pages<=1){ el.innerHTML=""; return; }
+  let html=`<button ${p===1?"disabled":""} data-p="${p-1}">‹</button>`;
+  const set=new Set([1,2,pages-1,pages,p-1,p,p+1]);
+  let last=0;
+  for(let i=1;i<=pages;i++){
+    if(!set.has(i)) continue;
+    if(i-last>1) html+=`<span class="ellip">…</span>`;
+    html+=`<button class="${i===p?"active":""}" data-p="${i}">${i}</button>`;
+    last=i;
+  }
+  html+=`<button ${p===pages?"disabled":""} data-p="${p+1}">›</button>`;
+  el.innerHTML=html;
+  el.querySelectorAll("button[data-p]").forEach(b=>b.onclick=()=>{ S.page=+b.dataset.p; renderTable(); });
+}
+
+/* ---------- Inicialización de la interfaz ---------- */
+function enableUI(){
+  ["fCiudad","fMunicipio","fComuna","rangeBtn","btnReset","btnRemap","tblSearch","pageSize"].forEach(id=>$("#"+id).disabled=false);
+  $("#cediBtn").disabled=false;
+  $("#btnPublish").classList.remove("hidden");
+  buildThead();
+}
+buildThead();
+
+/* ===== Puente con la nube (Firebase) para compartir la data publicada ===== */
+window.__qhSetCloudStatus = txt => { const e=$("#cloudStatus"); if(e) e.textContent=txt||""; };
+/* aplica un dataset recibido de la nube (lo que se publicó) y reconstruye el tablero */
+window.qhApplyCloud = payload => {
+  if(!payload || !payload.rows || !payload.rows.length) return;
+  S.headers = payload.headers || [];
+  S.rawRows = payload.rows;
+  S.mapping = payload.mapping || {};
+  buildRecords();
+};
+/* entrega el dataset actual para publicarlo (filas crudas + mapeo de columnas) */
+window.qhGetDataset = () => ({ headers:S.headers, rows:S.rawRows, mapping:S.mapping });
+
+$("#btnPublish").onclick = async () => {
+  if(!window.qhCloud || !window.qhCloud.ready){
+    toast("Falta configurar Firebase en el archivo (ver instrucciones).","err"); return;
+  }
+  if(!S.rawRows || !S.rawRows.length){ toast("Primero carga una base.","err"); return; }
+  if(!confirm("Se publicará esta base para que cualquiera con el link la vea (reemplaza la anterior). ¿Continuar?")) return;
+  const btn=$("#btnPublish"); const prev=btn.innerHTML; btn.disabled=true; btn.textContent="Publicando…";
+  try{
+    const n=await window.qhCloud.save(window.qhGetDataset());
+    window.__qhSetCloudStatus(`Publicado · ${fmt(n)} filas · ${new Date().toLocaleString("es-CO")}`);
+    toast(`Datos publicados (${fmt(n)} filas). Quien abra el link ya los verá.`,"ok");
+  }catch(e){ console.error(e); toast("No se pudo publicar: "+(e&&e.message||e),"err"); }
+  finally{ btn.disabled=false; btn.innerHTML=prev; }
+};
+</script>
+
+<!-- ================================================================
+     NUBE (Firebase Firestore): guarda la data publicada y la muestra
+     a cualquiera que abra el link. Para activarla, pega abajo la
+     config de tu proyecto Firebase y publica Firestore con regla de
+     lectura pública. Sin esta config el tablero sigue funcionando en
+     modo local (solo tú ves lo que cargas).
+     ================================================================ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ======= PEGA AQUÍ LA CONFIG DE TU PROYECTO FIREBASE ======= */
+const firebaseConfig = {
+  apiKey:            "PEGA_TU_API_KEY",
+  authDomain:        "PEGA_TU_PROYECTO.firebaseapp.com",
+  projectId:         "PEGA_TU_PROJECT_ID",
+  storageBucket:     "PEGA_TU_PROYECTO.appspot.com",
+  messagingSenderId: "PEGA_TU_SENDER_ID",
+  appId:             "PEGA_TU_APP_ID"
+};
+/* =========================================================== */
+
+const DOC_ID = "cuerosVelez";     // cambia este id si usas el mismo proyecto para otro cliente
+const CHUNK  = 300;               // filas por bloque (evita el límite de 1MB por documento)
+const configured = firebaseConfig.projectId && !firebaseConfig.projectId.startsWith("PEGA");
+let db=null;
+if(configured){ try{ db=getFirestore(initializeApp(firebaseConfig)); }catch(e){ console.error("Firebase init:",e); } }
+
+async function save(ds){
+  if(!db) throw new Error("Firebase no configurado");
+  const rows=ds.rows||[], chunks=Math.ceil(rows.length/CHUNK);
+  const batch=writeBatch(db);
+  batch.set(doc(db,"datasets",DOC_ID), { headers:ds.headers||[], mapping:ds.mapping||{}, count:rows.length, chunks, updated:Date.now() });
+  for(let i=0;i<chunks;i++) batch.set(doc(db,"datasets",DOC_ID,"chunks",String(i)), { rows: rows.slice(i*CHUNK,(i+1)*CHUNK) });
+  await batch.commit();
+  // elimina bloques sobrantes de una carga anterior más grande
+  const existing=await getDocs(collection(db,"datasets",DOC_ID,"chunks"));
+  const extra=[]; existing.forEach(d=>{ if(+d.id>=chunks) extra.push(d.id); });
+  for(const id of extra) await deleteDoc(doc(db,"datasets",DOC_ID,"chunks",id));
+  return rows.length;
+}
+async function load(){
+  if(!db) return null;
+  const meta=await getDoc(doc(db,"datasets",DOC_ID));
+  if(!meta.exists()) return null;
+  const m=meta.data();
+  const snap=await getDocs(collection(db,"datasets",DOC_ID,"chunks"));
+  const parts=[]; snap.forEach(d=>parts.push([+d.id, d.data().rows||[]]));
+  parts.sort((a,b)=>a[0]-b[0]);
+  return { headers:m.headers||[], rows:[].concat(...parts.map(p=>p[1])), mapping:m.mapping||{}, updated:m.updated };
+}
+window.qhCloud = { ready:!!db, save, load };
+
+/* Auto-carga: al abrir el link, muestra la última data publicada */
+(async()=>{
+  if(!db){ return; }
+  try{
+    window.__qhSetCloudStatus && window.__qhSetCloudStatus("Cargando datos publicados…");
+    const ds=await load();
+    if(ds && ds.rows && ds.rows.length && window.qhApplyCloud){
+      window.qhApplyCloud(ds);
+      const when = ds.updated ? new Date(ds.updated).toLocaleString("es-CO") : "";
+      window.__qhSetCloudStatus && window.__qhSetCloudStatus(`En línea · ${ds.rows.length} filas${when?" · "+when:""}`);
+    } else {
+      window.__qhSetCloudStatus && window.__qhSetCloudStatus("Sin datos publicados aún.");
+    }
+  }catch(e){ console.error("Carga nube:",e); window.__qhSetCloudStatus && window.__qhSetCloudStatus("No se pudieron cargar los datos publicados."); }
+})();
+</script>
+</body>
+</html>
